@@ -18,4 +18,5 @@ services:
     ports:
       - "5044:5044"
       - "10514:10514"
+      - "10514:10514/udp"
     restart: always

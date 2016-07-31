@@ -14,7 +14,7 @@ Consume
 
 `Default`
 ```
-docker run -d -p 5044:5044 -p 10514:10514 mrlesmithjr/logstash
+docker run -d -p 5044:5044 -p 10514:10514 -p 10514:10514/udp mrlesmithjr/logstash
 ```
 
 Consume using docker-compose (Spins up [Elasticsearch] with persistent
@@ -40,14 +40,22 @@ input {
   }
 }
 
+input {
+  udp {
+    type => "syslog"
+    port => "10514"
+  }
+}
+
 output {
   elasticsearch {
     hosts => ["http://elasticsearch:9200"]
   }
 }
+
 ```
-This is configured for [Beats] input `TCP/5044`, syslog input `TCP/10514`,
-and [Elasticsearch] output `http://elasticsearch:9200`.
+This is configured for [Beats] input `TCP/5044`, syslog input `TCP/10514`, syslog
+input `UDP/10514` and [Elasticsearch] output `http://elasticsearch:9200`.
 
 Configure your clients to send syslog using `TCP/10514`.
 Example Linux rsyslog configuration would be configured as `*.* @@HostOrIP:10514`

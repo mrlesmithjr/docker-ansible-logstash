@@ -50,7 +50,7 @@ COPY config/ /etc/logstash/conf.d
 VOLUME /etc/logstash/conf.d
 
 # Expose Port(s)
-EXPOSE 514 514/udp 5044 10514
+EXPOSE 514 514/udp 5044 10514 10514/udp
 
 # Container start-up
 CMD ["logstash", "agent", "-f", "/etc/logstash/conf.d/"]
