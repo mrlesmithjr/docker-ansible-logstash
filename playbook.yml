@@ -5,7 +5,7 @@
   vars:
     - gosu_ver: '1.9'
     - logstash_major_ver: '2.2'
-    - logstash_ver: '1:2.2.3-1'
+    - logstash_ver: '1:2.2.2-1'
   tasks:
     - name: Installing apt-transport-https
       apt:
