@@ -4,7 +4,8 @@
   become: true
   vars:
     - gosu_ver: '1.9'
-    - logstash_ver: '2.3'
+    - logstash_major_ver: '2.3'
+    - logstash_ver: '2.3.2'
   tasks:
     - name: Installing apt-transport-https
       apt:
@@ -57,11 +58,11 @@
 
     - name: Adding Logstash Repo
       apt_repository:
-        repo: "deb https://packages.elastic.co/logstash/{{ logstash_ver }}/debian stable main"
+        repo: "deb https://packages.elastic.co/logstash/{{ logstash_major_ver }}/debian stable main"
 
     - name: Installing Logstash
       apt:
-        name: "logstash"
+        name: "logstash={{ logstash_ver }}"
         state: "present"
         install_recommends: no
 
