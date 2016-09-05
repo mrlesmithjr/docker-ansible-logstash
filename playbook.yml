@@ -4,8 +4,8 @@
   become: true
   vars:
     - gosu_ver: '1.9'
-    - logstash_major_ver: '2.3'
-    - logstash_ver: '1:2.3.2-1'
+    - logstash_major_ver: '2.4'
+    - logstash_ver: '1:2.4.0-1'
   tasks:
     - name: Installing apt-transport-https
       apt:
