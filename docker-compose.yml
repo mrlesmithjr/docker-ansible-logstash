@@ -12,7 +12,7 @@ services:
   logstash:
     depends_on:
       - elasticsearch
-    image: mrlesmithjr/logstash:latest
+    image: mrlesmithjr/logstash:alpine
     links:
       - elasticsearch
     ports:

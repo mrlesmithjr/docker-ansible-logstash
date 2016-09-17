@@ -1,0 +1,100 @@
+---
+- hosts: localhost
+  connection: local
+  become: true
+  vars:
+    - logstash_dl_file: 'logstash-{{ logstash_ver }}.tar.gz'
+    - logstash_major_ver: '2.4'
+    - logstash_url: 'https://download.elastic.co/logstash/logstash'
+    - logstash_ver: '2.4.0'
+  tasks:
+    - name: Updating APK Cache
+      apk:
+        update_cache: yes
+
+    - name: Installing ca-certificates
+      apk:
+        name: "ca-certificates"
+        state: "present"
+
+    - name: Installing Logstash Pre-Reqs
+      apk:
+        name: "{{ item }}"
+        state: "present"
+      with_items:
+        - 'bash'
+        - 'libzmq'
+        - 'rsyslog'
+        - 'supervisor'
+        - 'tar'
+
+    - name: Ensuring /usr/local/lib Exists
+      file:
+        path: "/usr/local/lib"
+        state: "directory"
+
+    - name: Installing JRE
+      apk:
+        name: "openjdk8-jre"
+        state: "present"
+
+    - name: Checking For Logstash User
+      shell: "cut -d: -f1 /etc/passwd"
+      register: "users_list"
+
+    - name: Creating Logstash User
+      command: "adduser -DH -s /sbin/nologin logstash"
+      when: users_list.stdout.find('logstash') != 1
+
+    - name: Ensuring Folders Exists
+      file:
+        path: "{{ item }}"
+        state: "directory"
+      with_items:
+        - '/etc/logstash/conf.d'
+        - '/opt'
+        - '/var/log/logstash'
+
+    - name: Setting Folder Permissions
+      file:
+        path: "{{ item }}"
+        owner: "logstash"
+        group: "logstash"
+      with_items:
+        - '/var/log/logstash'
+
+    - name: Downloading Logstash
+      get_url:
+        url: "{{ logstash_url }}/{{ logstash_dl_file }}"
+        dest: "/opt/{{ logstash_dl_file }}"
+
+    - name: Extracting Logstash
+      unarchive:
+        src: "/opt/{{ logstash_dl_file }}"
+        dest: "/opt"
+        copy: no
+
+    - name: Creating Logstash Symlink
+      file:
+        src: "/opt/logstash-{{ logstash_ver }}"
+        dest: "/opt/logstash"
+        state: "link"
+
+    - name: Cleaning Up
+      file:
+        path: "{{ item }}"
+        state: "absent"
+      with_items:
+        - '/opt/{{ logstash_dl_file }}'
+
+# We are doing this to enable Rsyslogd to listen on tcp/514 and udp/514
+    - name: Configuring Rsyslogd To Listen On TCP/514 and UDP/514
+      lineinfile:
+        dest: "/etc/rsyslog.conf"
+        line: "{{ item }}"
+      with_items:
+        - '*.* @@127.0.0.1:10514'
+        - '$ModLoad imudp'
+        - '$UDPServerRun 514'
+        - '$ModLoad imtcp'
+        - '$InputTCPServerRun 514'

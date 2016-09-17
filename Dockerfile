@@ -1,26 +1,14 @@
-FROM ubuntu:14.04
+FROM mrlesmithjr/alpine-ansible
 
 MAINTAINER Larry Smith Jr. <mrlesmithjr@gmail.com>
 
-# Update apt-cache
-RUN apt-get update
-
-# Install Ansible
-RUN apt-get -y install git software-properties-common && \
-    apt-add-repository ppa:ansible/ansible && \
-    apt-get update && \
-    apt-get -y install ansible
-
-# Copy Ansible Playbook
-COPY playbook.yml /playbook.yml
+# Copy Ansible Related Files
+COPY config/ansible/ /
 
 # Run Ansible playbook
-RUN ansible-playbook -i "localhost," -c local /playbook.yml
-
-# Cleanup
-RUN apt-get -y clean && \
-    apt-get -y autoremove && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+RUN ansible-playbook -i "localhost," -c local /playbook.yml && \
+  rm -rf /tmp/* && \
+  rm -rf /var/cache/apk/*
 
 ENV PATH /opt/logstash/bin:$PATH
 
@@ -34,23 +22,18 @@ RUN set -ex \
 		sed -ri 's!^(path.log|path.config):!#&!g' "$LS_SETTINGS_DIR/logstash.yml"; \
 	fi
 
-# Setup entrypoint Ansible Playbook
-COPY docker-entrypoint.yml /docker-entrypoint.yml
+# Copy Docker Entrypoint
+COPY docker-entrypoint.sh /
+RUN chmod +x /docker-entrypoint.sh
 
-# Setup entrypoint script
-COPY docker-entrypoint.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
-RUN ln -s usr/local/bin/docker-entrypoint.sh /entrypoint.sh
+ENTRYPOINT ["/docker-entrypoint.sh"]
 
-ENTRYPOINT ["docker-entrypoint.sh"]
-
-COPY config/ /etc/logstash/conf.d
+COPY config/logstash/*.conf /etc/logstash/conf.d
 
 # Setup volume
 VOLUME /etc/logstash/conf.d
 
+COPY config/supervisord/*.ini /etc/supervisor.d/
+
 # Expose Port(s)
 EXPOSE 514 514/udp 5044 10514 10514/udp
-
-# Container start-up
-CMD ["logstash", "agent", "-f", "/etc/logstash/conf.d/"]
